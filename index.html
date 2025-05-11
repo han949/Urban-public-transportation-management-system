@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="https://openlayers.org/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>公交车站点查询系统</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- 侧边栏 -->
+      <div class="sidebar">
+        <div class="tabs">
+          <div class="tab active" data-tab="stations">站点管理</div>
+          <div class="tab" data-tab="routes">路线管理</div>
+          <div class="tab" data-tab="search">查询</div>
+        </div>
+
+        <!-- 站点管理面板 -->
+        <div class="tab-content active" id="stations-panel">
+          <h3>站点列表</h3>
+          <button id="add-station-btn" class="action-btn">添加新站点</button>
+          <div id="station-list" class="list-container"></div>
+        </div>
+
+        <!-- 路线管理面板 -->
+        <div class="tab-content" id="routes-panel">
+          <h3>路线列表</h3>
+          <button id="add-route-btn" class="action-btn">添加新路线</button>
+          <div id="route-list" class="list-container"></div>
+        </div>
+
+        <!-- 查询面板 -->
+        <div class="tab-content" id="search-panel">
+          <h3>站点查询</h3>
+          <div class="form-group">
+            <label for="search-input">站点名称</label>
+            <input type="text" id="search-input" placeholder="输入站点名称搜索">
+          </div>
+          <button id="search-btn">搜索</button>
+          <div id="search-results" class="list-container"></div>
+        </div>
+      </div>
+
+      <!-- 主地图区域 -->
+      <div id="map"></div>
+
+      <!-- 顶部导航栏 -->
+      <div class="navbar">
+        <h1>公交车站点查询系统</h1>
+        <div id="menu-toggle" class="menu-toggle">
+          <span></span>
+        </div>
+      </div>
+
+      <!-- 地图工具栏 -->
+      <div class="toolbar">
+        <button id="zoom-in" class="tool-button" title="放大">+</button>
+        <button id="zoom-out" class="tool-button" title="缩小">-</button>
+        <button id="home" class="tool-button" title="返回默认视图">⌂</button>
+      </div>
+    </div>
+
+    <!-- 站点弹窗 -->
+    <div id="station-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="station-modal-title">添加站点</h2>
+          <button class="close-button">&times;</button>
+        </div>
+        <form id="station-form">
+          <input type="hidden" id="station-id">
+          <div class="form-group">
+            <label for="station-name">站点名称</label>
+            <input type="text" id="station-name" required>
+          </div>
+          <div class="form-group">
+            <label for="station-longitude">经度</label>
+            <input type="number" step="0.000001" id="station-longitude" required>
+          </div>
+          <div class="form-group">
+            <label for="station-latitude">纬度</label>
+            <input type="number" step="0.000001" id="station-latitude" required>
+          </div>
+          <div class="form-group">
+            <label for="station-address">地址</label>
+            <input type="text" id="station-address">
+          </div>
+          <div class="form-group">
+            <label for="station-description">描述</label>
+            <textarea id="station-description" rows="3"></textarea>
+          </div>
+          <button type="submit" id="station-submit">保存</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 路线弹窗 -->
+    <div id="route-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="route-modal-title">添加路线</h2>
+          <button class="close-button">&times;</button>
+        </div>
+        <form id="route-form">
+          <input type="hidden" id="route-id">
+          <div class="form-group">
+            <label for="route-name">路线名称</label>
+            <input type="text" id="route-name" required>
+          </div>
+          <div class="form-group">
+            <label for="route-start">起始站点</label>
+            <select id="route-start" required></select>
+          </div>
+          <div class="form-group">
+            <label for="route-end">终点站点</label>
+            <select id="route-end" required></select>
+          </div>
+          <div class="form-group">
+            <label for="route-distance">路线长度(公里)</label>
+            <input type="number" step="0.1" id="route-distance">
+          </div>
+          <div class="form-group">
+            <label for="route-description">描述</label>
+            <textarea id="route-description" rows="3"></textarea>
+          </div>
+          <button type="submit" id="route-submit">保存</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 路线站点管理弹窗 -->
+    <div id="route-stations-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="route-stations-title">管理路线站点</h2>
+          <button class="close-button">&times;</button>
+        </div>
+        <div class="route-stations-content">
+          <h3>当前路线站点</h3>
+          <div id="route-stations-list" class="list-container"></div>
+          <h3>添加站点到路线</h3>
+          <div class="form-group">
+            <label for="add-station-to-route">选择站点</label>
+            <select id="add-station-to-route"></select>
+          </div>
+          <div class="form-group">
+            <label for="station-order">顺序</label>
+            <input type="number" id="station-order" min="1" value="1">
+          </div>
+          <button id="add-route-station-btn">添加站点</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loader">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- 地图弹出窗口 -->
+    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <div id="popup-content"></div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
