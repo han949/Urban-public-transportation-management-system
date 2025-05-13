@@ -22,17 +22,14 @@ const routeModel = {
   // 根据ID获取单个路线
   getRouteById: async (id) => {
     try {
-      const result = await db.query(`
-        SELECT r.*, 
-               s1.name as start_station_name, 
-               s2.name as end_station_name 
-        FROM routes r
-        LEFT JOIN stations s1 ON r.start_station = s1.station_id
-        LEFT JOIN stations s2 ON r.end_station = s2.station_id
-        WHERE r.route_id = $1`, [id]);
+      const result = await db.query(
+        'SELECT r.*, s1.name as start_station_name, s2.name as end_station_name FROM routes r LEFT JOIN stations s1 ON r.start_station = s1.station_id LEFT JOIN stations s2 ON r.end_station = s2.station_id WHERE r.route_id = $1',
+        [id] // 使用参数化查询
+      );
       return result.rows[0];
     } catch (error) {
-      throw error;
+      console.error('数据库查询失败:', error); // 打印数据库错误日志
+      throw new Error('数据库查询失败');
     }
   },
 
@@ -114,6 +111,20 @@ const routeModel = {
       return result.rows[0];
     } catch (error) {
       throw error;
+    }
+  },
+
+  // 根据名称查询路线
+  searchRoutesByName: async (name) => {
+    try {
+      const result = await db.query(
+        'SELECT r.*, s1.name as start_station_name, s2.name as end_station_name FROM routes r LEFT JOIN stations s1 ON r.start_station = s1.station_id LEFT JOIN stations s2 ON r.end_station = s2.station_id WHERE r.name ILIKE $1 ORDER BY r.route_id',
+        [`%${name}%`] // 使用 ILIKE 进行模糊匹配
+      );
+      return result.rows;
+    } catch (error) {
+      console.error('数据库查询失败:', error); // 打印数据库错误日志
+      throw new Error('数据库查询失败');
     }
   }
 };

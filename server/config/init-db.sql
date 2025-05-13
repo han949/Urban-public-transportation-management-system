@@ -45,6 +45,18 @@ VALUES
   ('商业中心站', 116.4551, 39.9127, '北京市朝阳区', '购物和商业区')
 ON CONFLICT DO NOTHING;
 
+-- 导入站点数据的命令示例
+\copy public.stations (name, longitude, latitude, address, description) 
+FROM 'D:/software/PG/data/temp/1.csv' 
+WITH (
+  FORMAT csv,
+  HEADER true,
+  DELIMITER ',', 
+  ENCODING 'UTF8',
+  QUOTE '"',
+  ESCAPE ''''
+);
+
 -- 插入路线数据
 INSERT INTO routes (name, start_station, end_station, distance, description)
 VALUES

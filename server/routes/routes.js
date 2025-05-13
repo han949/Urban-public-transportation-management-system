@@ -12,17 +12,42 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 获取单个路线
+
+
+router.get('/search', async (req, res) => {
+  try {
+    const { term } = req.query;
+    if (!term || term.trim() === '') {
+      return res.status(400).json({ message: '查询参数 term 是必需的' });
+    }
+
+    // 调用模型方法进行模糊搜索
+    const routes = await routesModel.searchRoutesByName(term.trim());
+    res.json(routes);
+  } catch (error) {
+    console.error('搜索路线失败:', error);
+    res.status(500).json({ error: '搜索路线失败' });
+  }
+});
+
+
 router.get('/:id', async (req, res) => {
   try {
-    const route = await routesModel.getRouteById(req.params.id);
+    console.log('接收到的参数:', req.params); // 打印参数
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      console.error('无效的 ID:', req.params.id); // 打印无效的 ID
+      return res.status(400).json({ error: 'ID 必须是一个整数' });
+    }
+    const route = await routesModel.getRouteById(id);
     if (route) {
       res.json(route);
     } else {
       res.status(404).json({ message: '路线不存在' });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('获取路线失败:', error);
+    res.status(500).json({ error: '获取路线失败' });
   }
 });
 

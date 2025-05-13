@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 中间件配置
-app.use(cors());
+app.use(cors()); // 确保启用了 CORS
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -33,6 +33,15 @@ try {
   console.log('路线路由加载成功');
 } catch (error) {
   console.error('路由加载失败:', error);
+}
+
+try {
+  console.log('加载认证路由...');
+  const authRoutes = require('./routes/auth');
+  app.use('/api', authRoutes); // 确保路径为 '/api'
+  console.log('认证路由加载成功');
+} catch (error) {
+  console.error('认证路由加载失败:', error);
 }
 
 // 默认路由返回前端应用

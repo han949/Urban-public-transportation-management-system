@@ -22,6 +22,19 @@ const stationModel = {
     }
   },
 
+  // 搜索站点
+  searchStations: async (term) => {
+    try {
+      const result = await db.query(
+        'SELECT * FROM stations WHERE name ILIKE $1 ORDER BY station_id',
+        [`%${term}%`]
+      );
+      return result.rows;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   // 添加新站点
   addStation: async (station) => {
     const { name, longitude, latitude, address, description } = station;
