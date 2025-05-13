@@ -99,13 +99,16 @@ html, body {
 /* 标签页 */
 .tabs {
   display: flex;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+  background-color: #3498db;
+  border-bottom: 0px solid #ddd;
   margin-bottom: 10px; /* 增加底部间距 */
+  position: sticky; /* 固定位置 */
+  top: 0; /* 距离顶部为0 */
+  z-index: 10; /* 确保在其他内容上方 */
 }
 
 .tab {
-  padding: 10px 12px; /* 调整内边距 */
+  padding: 10px 10px; /* 调整内边距 */
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.3s;
