@@ -1050,49 +1050,149 @@ const searchStations = async () => {
   const term = searchInput.value.trim();
 
   try {
-    let url = `${API_BASE_URL}/stations/search`;
-    if (term) {
-      url += `?term=${encodeURIComponent(term)}`;
-    }
-
+    const url = `${API_BASE_URL}/stations/search?term=${encodeURIComponent(term)}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('搜索站点失败');
 
     const stations = await response.json();
-
-    // 渲染搜索结果
-    const resultsContainer = document.getElementById('search-results');
-    resultsContainer.innerHTML = '';
-
-    if (stations.length === 0) {
-      resultsContainer.innerHTML = '<p>没有找到匹配的站点</p>';
-      return;
-    }
-
-    stations.forEach(station => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-item');
-
-      listItem.innerHTML = `
-        <h4>${station.name}</h4>
-        <p>${station.address || '无地址'}</p>
-      `;
-
-      resultsContainer.appendChild(listItem);
-
-      // 点击搜索结果项定位到地图上的站点
-      listItem.addEventListener('click', () => {
-        zoomToStation(station);
-      });
-    });
+    renderSearchResults(stations);
   } catch (error) {
     console.error('搜索站点失败:', error);
     alert('搜索站点失败');
   }
 };
 
+const renderSearchResults = (stations) => {
+  const resultsContainer = document.getElementById('search-results');
+  resultsContainer.innerHTML = '';
 
+  stations.forEach(station => {
+    const listItem = document.createElement('div');
+    listItem.classList.add('list-item');
 
+    listItem.innerHTML = `
+      <h4>${station.name}</h4>
+      <p>${station.address || '无地址'}</p>
+    `;
+
+    const actionsContainer = document.createElement('div');
+    actionsContainer.classList.add('list-item-actions');
+
+    const editButton = document.createElement('button');
+    editButton.classList.add('edit-btn');
+    editButton.textContent = '编辑';
+    editButton.dataset.id = station.station_id;
+    editButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openStationModal(station.station_id);
+    });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('delete-btn');
+    deleteButton.textContent = '删除';
+    deleteButton.dataset.id = station.station_id;
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`确定要删除站点 "${station.name}" 吗?`)) {
+        deleteStation(station.station_id);
+      }
+    });
+
+    actionsContainer.appendChild(editButton);
+    actionsContainer.appendChild(deleteButton);
+    listItem.appendChild(actionsContainer);
+
+    resultsContainer.appendChild(listItem);
+
+    // 点击列表项时定位到地图上的站点
+    listItem.addEventListener('click', () => {
+      zoomToStation(station);
+    });
+  });
+};
+
+const renderRouteSearchResults = (routes) => {
+  const resultsContainer = document.getElementById('route-search-results');
+  resultsContainer.innerHTML = '';
+
+  routes.forEach(route => {
+    const listItem = document.createElement('div');
+    listItem.classList.add('list-item');
+
+    listItem.innerHTML = `
+      <h4>${route.name}</h4>
+      <p>描述: ${route.description || '无描述'}</p>
+      <p>起点: ${route.start_station_name || '无'} - 终点: ${route.end_station_name || '无'}</p>
+      <p>距离: ${route.distance || '未知'} 公里</p>
+    `;
+
+    const actionsContainer = document.createElement('div');
+    actionsContainer.classList.add('list-item-actions');
+
+    const editButton = document.createElement('button');
+    editButton.classList.add('edit-btn');
+    editButton.textContent = '编辑';
+    editButton.dataset.id = route.route_id;
+    editButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openRouteModal(route.route_id);
+    });
+
+    const deleteButton = document.createElement('button');
+    deleteButton.classList.add('delete-btn');
+    deleteButton.textContent = '删除';
+    deleteButton.dataset.id = route.route_id;
+    deleteButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`确定要删除路线 "${route.name}" 吗?`)) {
+        deleteRoute(route.route_id);
+      }
+    });
+
+    actionsContainer.appendChild(editButton);
+    actionsContainer.appendChild(deleteButton);
+    listItem.appendChild(actionsContainer);
+
+    resultsContainer.appendChild(listItem);
+
+    // 点击列表项时高亮显示路线
+    listItem.addEventListener('click', async () => {
+      const routeStationsResponse = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`);
+      if (!routeStationsResponse.ok) {
+        alert('获取路线站点数据失败');
+        return;
+      }
+
+      const routeStations = await routeStationsResponse.json();
+      if (routeStations.length >= 2) {
+        const coordinates = routeStations.map(station =>
+          fromLonLat([station.longitude, station.latitude])
+        );
+
+        const routeFeature = new Feature({
+          geometry: new LineString(coordinates),
+          name: route.name,
+          description: route.description,
+          color: '#e74c3c', // 默认颜色
+          type: 'route'
+        });
+
+        const { routesSource } = window.busSystem;
+        routesSource.clear(); // 清除之前的搜索结果
+        routesSource.addFeature(routeFeature);
+
+        // 调整视图到路线范围
+        const extent = routeFeature.getGeometry().getExtent();
+        const { map } = window.busSystem;
+        map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
+      } else {
+        alert('该路线没有足够的站点数据');
+      }
+    });
+  });
+};
+
+// 修改搜索路线函数以调用 renderRouteSearchResults
 const searchRoutes = async () => {
   const searchInput = document.getElementById('route-search-input');
   const term = searchInput.value.trim();
@@ -1112,64 +1212,7 @@ const searchRoutes = async () => {
     }
 
     const routes = await response.json();
-
-    // 渲染搜索结果
-    const resultsContainer = document.getElementById('route-search-results');
-    resultsContainer.innerHTML = '';
-
-    if (routes.length === 0) {
-      resultsContainer.innerHTML = '<p>没有找到匹配的路线</p>';
-      return;
-    }
-
-    routes.forEach(route => {
-      const listItem = document.createElement('div');
-      listItem.classList.add('list-item');
-
-      listItem.innerHTML = `
-        <h4>${route.name}</h4>
-        <p>描述: ${route.description || '无描述'}</p>
-        <p>起点: ${route.start_station_name || '无'} - 终点: ${route.end_station_name || '无'}</p>
-        <p>距离: ${route.distance || '未知'} 公里</p>
-      `;
-
-      resultsContainer.appendChild(listItem);
-
-      // 点击搜索结果项在地图上显示路线
-      listItem.addEventListener('click', async () => {
-        const routeStationsResponse = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`);
-        if (!routeStationsResponse.ok) {
-          alert('获取路线站点数据失败');
-          return;
-        }
-
-        const routeStations = await routeStationsResponse.json();
-        if (routeStations.length >= 2) {
-          const coordinates = routeStations.map(station =>
-            fromLonLat([station.longitude, station.latitude])
-          );
-
-          const routeFeature = new Feature({
-            geometry: new LineString(coordinates),
-            name: route.name,
-            description: route.description,
-            color: '#e74c3c', // 默认颜色
-            type: 'route'
-          });
-
-          const { routesSource } = window.busSystem;
-          routesSource.clear(); // 清除之前的搜索结果
-          routesSource.addFeature(routeFeature);
-
-          // 调整视图到路线范围
-          const extent = routeFeature.getGeometry().getExtent();
-          const { map } = window.busSystem;
-          map.getView().fit(extent, { padding: [50, 50, 50, 50], duration: 500 });
-        } else {
-          alert('该路线没有足够的站点数据');
-        }
-      });
-    });
+    renderRouteSearchResults(routes);
 
     // 显示取消按钮
     const cancelButton = document.getElementById('cancel-search-btn');

@@ -188,6 +188,39 @@ button:hover {
   border-left: 3px solid #3498db;
 }
 
+.list-item-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.list-item-actions button {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.list-item-actions .edit-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.list-item-actions .edit-btn:hover {
+  background-color: #2980b9;
+}
+
+.list-item-actions .delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.list-item-actions .delete-btn:hover {
+  background-color: #c0392b;
+}
+
 /* 地图工具栏 */
 .toolbar {
   position: absolute;
