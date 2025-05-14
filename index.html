@@ -110,6 +110,15 @@
         </button>
       </div>
     </div>
+    <!-- 添加到地图工具栏容器中 -->
+    <div id="layer-controls" class="map-tool-group">
+      <button id="toggle-stations-btn" class="map-tool-btn active" title="显示/隐藏站点">
+        <i class="fa fa-map-marker"></i>
+      </button>
+      <button id="toggle-routes-btn" class="map-tool-btn active" title="显示/隐藏路线">
+        <i class="fa fa-road"></i>
+      </button>
+    </div>
   </div>
 
 
@@ -141,6 +150,7 @@
     </div>
   </div>
 
+
   <!-- 站点弹窗 -->
   <div id="station-modal" class="modal">
     <div class="modal-content">
@@ -155,6 +165,10 @@
           <input type="text" id="station-name" required>
         </div>
         <div class="form-group">
+          <label for="station-line">所属线路</label>
+          <input type="text" id="station-line">
+        </div>
+        <div class="form-group">
           <label for="station-longitude">经度</label>
           <input type="number" step="0.000001" id="station-longitude" required>
         </div>
@@ -165,10 +179,6 @@
         <div class="form-group">
           <label for="station-address">地址</label>
           <input type="text" id="station-address">
-        </div>
-        <div class="form-group">
-          <label for="station-description">描述</label>
-          <textarea id="station-description" rows="3"></textarea>
         </div>
         <button type="submit" id="station-submit">保存</button>
       </form>
@@ -189,20 +199,16 @@
           <input type="text" id="route-name" required>
         </div>
         <div class="form-group">
-          <label for="route-start">起始站点</label>
-          <select id="route-start" required></select>
-        </div>
-        <div class="form-group">
-          <label for="route-end">终点站点</label>
-          <select id="route-end" required></select>
-        </div>
-        <div class="form-group">
-          <label for="route-distance">路线长度(公里)</label>
-          <input type="number" step="0.1" id="route-distance">
+          <label for="route-number">路线编号</label>
+          <input type="text" id="route-number">
         </div>
         <div class="form-group">
           <label for="route-description">描述</label>
           <textarea id="route-description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="route-geometry">路线几何数据</label>
+          <textarea id="route-geometry" rows="5" placeholder="请提供GeoJSON格式的LineString数据"></textarea>
         </div>
         <button type="submit" id="route-submit">保存</button>
       </form>

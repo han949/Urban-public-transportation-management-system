@@ -11,7 +11,6 @@ import { Feature } from 'ol';
 import { Style, Circle, Fill, Stroke, Text } from 'ol/style';
 import Overlay from 'ol/Overlay';
 import LineString from 'ol/geom/LineString';
-// import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 import ScaleLine from 'ol/control/ScaleLine';
 import MousePosition from 'ol/control/MousePosition';
@@ -22,7 +21,6 @@ import { defaults as defaultControls } from 'ol/control';
 // API基础URL
 const API_BASE_URL = 'http://localhost:3000/api';
 const tdtKey = '6cbc8cbaf5140b1bffa7bc4e069ecba6';  // 请替换为您的实际密钥
-
 
 const adjustStationsVisibility = (stationsSource, zoomLevel) => {
   stationsSource.getFeatures().forEach((feature) => {
@@ -42,7 +40,7 @@ const adjustStationsVisibility = (stationsSource, zoomLevel) => {
           text:
             zoomLevel >= 14 // 在缩放级别大于等于14时显示字体
               ? new Text({
-                text: feature.get('name'),
+                text: feature.get('address'), // 修改此处：从name改为address
                 font: '12px Calibri,sans-serif',
                 fill: new Fill({ color: '#000' }),
                 stroke: new Stroke({ color: '#fff', width: 3 }),
@@ -102,23 +100,7 @@ const imageAnnotationLayer = new TileLayer({
 });
 
 const initMap = () => {
-  // // 天地图矢量图层
-  // const tianDiTuVectorLayer = new TileLayer({
-  //   title: '天地图矢量',
-  //   source: new XYZ({
-  //     url: `http://t0.tianditu.gov.cn/vec_w/wmts?layer=vec&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
-  //   }),
-  //   visible: true
-  // });
 
-  // // 天地图标注图层
-  // const tianDiTuAnnotationLayer = new TileLayer({
-  //   title: '地名标注',
-  //   source: new XYZ({
-  //     url: `http://t0.tianditu.gov.cn/cva_w/wmts?layer=cva&style=default&tilematrixset=w&Service=WMTS&Request=GetTile&Version=1.0.0&Format=tiles&TileMatrix={z}&TileCol={x}&TileRow={y}&tk=${tdtKey}`,
-  //   }),
-  //   visible: true
-  // });
 
   // 创建站点图层
   const stationsSource = new VectorSource();
@@ -132,29 +114,32 @@ const initMap = () => {
           stroke: new Stroke({ color: '#fff', width: 2 })
         }),
         text: new Text({
-          text: feature.get('name'),
+          text: feature.get('address'), // 修改此处：从name改为address(对应name_st)
           font: '12px Calibri,sans-serif',
           fill: new Fill({ color: '#000' }),
           stroke: new Stroke({ color: '#fff', width: 3 }),
           offsetY: -15
         })
       });
-    }
+    },
+    zIndex: 10 // 确保在底图之上
   });
 
   // 创建路线图层
   const routesSource = new VectorSource();
+
+  // 在 initMap 函数中修改 routesLayer 的样式定义
   const routesLayer = new VectorLayer({
     source: routesSource,
     style: (feature) => {
       return new Style({
         stroke: new Stroke({
-          color: feature.get('color') || '#e74c3c',
-          width: 4
+          color: '#FF0000', // 使用明显的红色
+          width: 6 // 加粗线宽
         }),
         text: feature.get('showLabel') ? new Text({
           text: feature.get('name'),
-          font: '14px Calibri,sans-serif',
+          font: '16px Arial', // 加大字体
           fill: new Fill({ color: '#000' }),
           stroke: new Stroke({ color: '#fff', width: 3 }),
           placement: 'line',
@@ -163,10 +148,8 @@ const initMap = () => {
         }) : null
       });
     },
-    zIndex: 5
+    zIndex: 5 // 确保在最上层
   });
-
-
 
 
   // 创建地图
@@ -175,9 +158,9 @@ const initMap = () => {
     layers: [
       // 添加基础底图
       baseMaps.vector,
-      baseMaps.image, 
+      baseMaps.image,
       baseMaps.terrain,
-      
+
       // 添加标注图层
       annotationLayer,
       imageAnnotationLayer,
@@ -226,17 +209,16 @@ const initMap = () => {
     const zoomLevel = map.getView().getZoom();
     adjustStationsVisibility(stationsSource, zoomLevel);
   });
-// 底图切换事件监听
+  // 底图切换事件监听
   document.getElementById('vector-map-btn').addEventListener('click', () => {
     // 激活当前按钮
     document.querySelectorAll('.map-type-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('vector-map-btn').classList.add('active');
-    
+
     // 显示矢量地图和对应标注
     baseMaps.vector.setVisible(true);
     baseMaps.image.setVisible(false);
     baseMaps.terrain.setVisible(false);
-    
     annotationLayer.setVisible(true);
     imageAnnotationLayer.setVisible(false);
   });
@@ -245,12 +227,12 @@ const initMap = () => {
     // 激活当前按钮
     document.querySelectorAll('.map-type-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('image-map-btn').classList.add('active');
-    
+
     // 显示影像地图和对应标注
     baseMaps.vector.setVisible(false);
     baseMaps.image.setVisible(true);
     baseMaps.terrain.setVisible(false);
-    
+
     annotationLayer.setVisible(false);
     imageAnnotationLayer.setVisible(true);
   });
@@ -259,7 +241,7 @@ const initMap = () => {
     // 激活当前按钮
     document.querySelectorAll('.map-type-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('terrain-map-btn').classList.add('active');
-    
+
     // 显示地形地图和对应标注
     baseMaps.vector.setVisible(false);
     baseMaps.image.setVisible(false);
@@ -274,14 +256,10 @@ const initMap = () => {
   map.addControl(scaleLine);
   map.addControl(mousePositionControl);
 
-
-
-
   // 创建弹出层
   const popup = document.getElementById('popup');
   const popupContent = document.getElementById('popup-content');
   const popupCloser = document.getElementById('popup-closer');
-
   const overlay = new Overlay({
     element: popup,
     autoPan: true,
@@ -305,18 +283,35 @@ const initMap = () => {
       return feature;
     });
 
-    if (feature && feature.get('type') === 'station') {
+    if (feature) {
+      const featureType = feature.get('type');
       const coordinates = feature.getGeometry().getCoordinates();
-      const content = `
-        <h3>${feature.get('name')}</h3>
-        <p><strong>地址:</strong> ${feature.get('address') || '无'}</p>
-        <p><strong>描述:</strong> ${feature.get('description') || '无'}</p>
-        <p><strong>经度:</strong> ${feature.get('longitude')}</p>
-        <p><strong>纬度:</strong> ${feature.get('latitude')}</p>
-      `;
+      let content = '';
 
-      popupContent.innerHTML = content;
-      overlay.setPosition(coordinates);
+      if (featureType === 'station') {
+        // 站点点击内容
+        content = `
+          <h3>${feature.get('name')}</h3>
+          <p><strong>地址:</strong> ${feature.get('address') || '无'}</p>
+          <p><strong>线路:</strong> ${feature.get('line') || '无'}</p>
+          <p><strong>经度:</strong> ${feature.get('longitude')}</p>
+          <p><strong>纬度:</strong> ${feature.get('latitude')}</p>
+        `;
+        popupContent.innerHTML = content;
+        overlay.setPosition(coordinates);
+      } else if (featureType === 'route') {
+        // 路线点击内容
+        content = `
+          <h3>${feature.get('name')}</h3>
+          <p><strong>路线编号:</strong> ${feature.get('route_number') || '无'}</p>
+          <p><strong>描述:</strong> ${feature.get('description') || '无'}</p>
+        `;
+        popupContent.innerHTML = content;
+        // 对于线要素，使用点击位置作为弹出窗口位置
+        overlay.setPosition(evt.coordinate);
+      } else {
+        overlay.setPosition(undefined);
+      }
     } else {
       overlay.setPosition(undefined);
     }
@@ -355,95 +350,230 @@ const initMap = () => {
     });
   });
 
+  // 在 initMap 函数的 return 语句前添加
+  // 添加测试路线来检查图层是否正常工作
+  const testFeature = new Feature({
+    geometry: new LineString([
+      fromLonLat([117.843818, 30.954168]), // 起点
+      fromLonLat([117.86, 30.96])  // 终点
+    ]),
+    name: '测试路线',
+    type: 'route',
+    showLabel: true
+  });
 
+  testFeature.setStyle(new Style({
+    stroke: new Stroke({
+      color: '#00FF00', // 绿色
+      width: 8
+    }),
+    text: new Text({
+      text: '测试路线',
+      font: '18px Arial',
+      fill: new Fill({ color: '#000' }),
+      stroke: new Stroke({ color: '#fff', width: 3 }),
+      placement: 'line'
+    })
+  }));
+
+  routesSource.addFeature(testFeature);
+  console.log('测试路线已添加');
+
+
+  // 添加到 initMap 函数末尾，在 return 语句之前
+
+// 添加图层显示/隐藏控制按钮功能
+const toggleStationsBtn = document.getElementById('toggle-stations-btn');
+const toggleRoutesBtn = document.getElementById('toggle-routes-btn');
+
+// 站点图层切换
+toggleStationsBtn.addEventListener('click', () => {
+  const visible = stationsLayer.getVisible();
+  stationsLayer.setVisible(!visible);
+  
+  // 更新按钮样式
+  if (!visible) {
+    toggleStationsBtn.classList.add('active');
+  } else {
+    toggleStationsBtn.classList.remove('active');
+  }
+});
+
+// 路线图层切换
+toggleRoutesBtn.addEventListener('click', () => {
+  const visible = routesLayer.getVisible();
+  routesLayer.setVisible(!visible);
+  
+  // 更新按钮样式
+  if (!visible) {
+    toggleRoutesBtn.classList.add('active');
+  } else {
+    toggleRoutesBtn.classList.remove('active');
+  }
+});
+
+// 初始化按钮状态
+toggleStationsBtn.classList.add('active');
+toggleRoutesBtn.classList.add('active');
+
+console.log('图层控制按钮已初始化');
 
   return { map, stationsSource, routesSource };
+
+
 };
 
-// 加载站点数据
-const loadStations = async (stationsSource) => {
+
+const refreshStations = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/stations`);
-    if (!response.ok) throw new Error('获取站点数据失败');
-
     const stations = await response.json();
 
+    const { stationsSource } = window.busSystem; // 从全局对象获取 stationsSource
     stationsSource.clear();
 
-    stations.forEach((station) => {
-      const feature = new Feature({
-        geometry: new Point(fromLonLat([station.longitude, station.latitude])),
-        name: station.name,
-        address: station.address,
-        description: station.description,
-        station_id: station.station_id,
-        longitude: station.longitude,
-        latitude: station.latitude,
-        type: 'station',
-        minZoom: station.minZoom || 10, // 设置最小缩放级别
-        maxZoom: station.maxZoom || 20 // 设置最大缩放级别
-      });
+    stations.forEach(station => {
+      try {
+        // 解析几何数据
+        const geom = JSON.parse(station.geometry);        // 创建要素
+        const feature = new Feature({
+          geometry: new Point(fromLonLat([
+            geom.coordinates[0],
+            geom.coordinates[1]
+          ])),
+          name: station.name,
+          address: station.address, // 对应name_st
+          line: station.line,       // 新增字段
+          station_id: station.station_id,
+          type: 'station',          // 添加类型标识
+          longitude: geom.coordinates[0],
+          latitude: geom.coordinates[1]
+        });
 
-      stationsSource.addFeature(feature);
+        stationsSource.addFeature(feature);
+      } catch (error) {
+        console.error('处理站点数据时出错:', error, station);
+      }
     });
-
-    return stations;
   } catch (error) {
-    console.error('加载站点数据失败:', error);
-    alert('加载站点数据失败');
-    return [];
+    console.error('获取站点数据失败:', error);
   }
 };
 
-// 加载路线数据
-const loadRoutes = async (routesSource, stationsSource) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/routes`,);
-    if (!response.ok) throw new Error('获取路线数据失败');
 
+
+// 修改 refreshRoutes 函数处理 MultiLineString 几何数据
+const refreshRoutes = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/routes`);
     const routes = await response.json();
 
-    // 定义一些不同的颜色用于路线
-    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+    console.log('获取到路线数据:', routes.length, '条');
 
+    const { routesSource } = window.busSystem;
     routesSource.clear();
 
-    for (let i = 0; i < routes.length; i++) {
-      const route = routes[i];
-      const color = colors[i % colors.length];
+    routes.forEach((route, index) => {
+      try {
+        // 解析几何数据
+        let geom;
+        if (typeof route.geometry === 'string') {
+          geom = JSON.parse(route.geometry);
+        } else {
+          geom = route.geometry;
+        }
 
-      // 获取路线的所有站点
-      const routeStationsResponse = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`,);
-      if (!routeStationsResponse.ok) continue;
+        console.log(`处理第${index + 1}条路线:`, route.name);
+        console.log(`几何类型:`, typeof geom, geom ? geom.type : 'undefined');
 
-      const routeStations = await routeStationsResponse.json();
+        // 检查几何数据是否有效
+        if (!geom || !geom.coordinates || !Array.isArray(geom.coordinates)) {
+          console.error('无效的路线几何数据:', route);
+          return;
+        }
 
-      if (routeStations.length >= 2) {
-        // 创建路线坐标数组
-        const coordinates = routeStations.map(station =>
-          fromLonLat([station.longitude, station.latitude])
-        );
+        // 处理 MultiLineString 类型几何数据
+        if (geom.type === 'MultiLineString') {
+          // 对于 MultiLineString，每个子数组是一条线
+          geom.coordinates.forEach((lineCoords, lineIndex) => {
+            if (lineCoords.length < 2) {
+              console.error(`第${index + 1}条路线的第${lineIndex + 1}条子线段坐标点不足:`, lineCoords);
+              return;
+            }
 
-        // 创建路线要素
-        const routeFeature = new Feature({
-          geometry: new LineString(coordinates),
-          name: route.name,
-          description: route.description,
-          route_id: route.route_id,
-          color: color,
-          showLabel: true,
-          type: 'route'
-        });
+            // 创建路线要素
+            const feature = new Feature({
+              geometry: new LineString(lineCoords.map(coord => fromLonLat(coord))),
+              name: `${route.name}${geom.coordinates.length > 1 ? ` (段落${lineIndex + 1})` : ''}`,
+              route_number: route.route_number,
+              description: route.description,
+              route_id: route.route_id,
+              type: 'route',
+              showLabel: lineIndex === 0 // 只在第一段显示标签
+            });
 
-        routesSource.addFeature(routeFeature);
+            // 设置样式
+            feature.setStyle(new Style({
+              stroke: new Stroke({
+                color: '#FF0000', // 红色
+                width: 6
+              }),
+              text: feature.get('showLabel') ? new Text({
+                text: route.name,
+                font: '16px Arial',
+                fill: new Fill({ color: '#000' }),
+                stroke: new Stroke({ color: '#fff', width: 3 }),
+                placement: 'line'
+              }) : null
+            }));
+
+            routesSource.addFeature(feature);
+            console.log(`成功添加路线要素: ${route.name} (段落${lineIndex + 1}), 坐标点数量: ${lineCoords.length}`);
+          });
+        } else {
+          // 处理 LineString 类型几何数据
+          if (geom.coordinates.length < 2) {
+            console.error('路线坐标点不足:', geom.coordinates);
+            return;
+          }
+
+          // 创建路线要素
+          const feature = new Feature({
+            geometry: new LineString(geom.coordinates.map(coord => fromLonLat(coord))),
+            name: route.name,
+            route_number: route.route_number,
+            description: route.description,
+            route_id: route.route_id,
+            type: 'route',
+            showLabel: true
+          });
+
+          // 设置样式
+          feature.setStyle(new Style({
+            stroke: new Stroke({
+              color: '#FF0000',
+              width: 6
+            }),
+            text: new Text({
+              text: route.name,
+              font: '16px Arial',
+              fill: new Fill({ color: '#000' }),
+              stroke: new Stroke({ color: '#fff', width: 3 }),
+              placement: 'line'
+            })
+          }));
+
+          routesSource.addFeature(feature);
+          console.log(`成功添加路线要素: ${route.name}, 坐标点数量: ${geom.coordinates.length}`);
+        }
+      } catch (error) {
+        console.error('处理路线数据时出错:', error, route);
       }
-    }
+    });
 
-    return routes;
+    console.log('路线图层中的要素数量:', routesSource.getFeatures().length);
   } catch (error) {
-    console.error('加载路线数据失败:', error);
-    alert('加载路线数据失败');
-    return [];
+    console.error('获取路线数据失败:', error);
   }
 };
 
@@ -546,10 +676,10 @@ const openStationModal = async (stationId = null) => {
   const form = document.getElementById('station-form');
   const idInput = document.getElementById('station-id');
   const nameInput = document.getElementById('station-name');
+  const lineInput = document.getElementById('station-line');
   const longitudeInput = document.getElementById('station-longitude');
   const latitudeInput = document.getElementById('station-latitude');
   const addressInput = document.getElementById('station-address');
-  const descriptionInput = document.getElementById('station-description');
 
   // 重置表单
   form.reset();
@@ -567,10 +697,10 @@ const openStationModal = async (stationId = null) => {
 
       idInput.value = station.station_id;
       nameInput.value = station.name;
+      lineInput.value = station.line || '';
       longitudeInput.value = station.longitude;
       latitudeInput.value = station.latitude;
       addressInput.value = station.address || '';
-      descriptionInput.value = station.description || '';
     } catch (error) {
       console.error('获取站点详情失败:', error);
       alert('获取站点详情失败');
@@ -591,64 +721,31 @@ const openRouteModal = async (routeId = null) => {
   const form = document.getElementById('route-form');
   const idInput = document.getElementById('route-id');
   const nameInput = document.getElementById('route-name');
-  const startSelect = document.getElementById('route-start');
-  const endSelect = document.getElementById('route-end');
-  const distanceInput = document.getElementById('route-distance');
+  const numberInput = document.getElementById('route-number');
   const descriptionInput = document.getElementById('route-description');
+  const geometryInput = document.getElementById('route-geometry');
 
   // 重置表单
   form.reset();
   idInput.value = '';
-
-  // 加载站点选项
-  try {
-    const response = await fetch(`${API_BASE_URL}/stations`,);
-    if (!response.ok) throw new Error('获取站点数据失败');
-
-    const stations = await response.json();
-
-    // 填充下拉框
-    startSelect.innerHTML = '<option value="">选择起始站点</option>';
-    endSelect.innerHTML = '<option value="">选择终点站点</option>';
-
-    stations.forEach(station => {
-      const startOption = document.createElement('option');
-      startOption.value = station.station_id;
-      startOption.textContent = station.name;
-      startSelect.appendChild(startOption);
-
-      const endOption = document.createElement('option');
-      endOption.value = station.station_id;
-      endOption.textContent = station.name;
-      endSelect.appendChild(endOption);
-    });
-  } catch (error) {
-    console.error('获取站点数据失败:', error);
-    alert('获取站点数据失败');
-    return;
-  }
-
   if (routeId) {
     // 编辑现有路线
-    title.textContent = '编辑路线';
-
     try {
-      const response = await fetch(`${API_BASE_URL}/routes/${routeId}`,);
+      const response = await fetch(`${API_BASE_URL}/routes/${routeId}`);
       if (!response.ok) throw new Error('获取路线数据失败');
 
       const route = await response.json();
 
       idInput.value = route.route_id;
       nameInput.value = route.name;
-      startSelect.value = route.start_station || '';
-      endSelect.value = route.end_station || '';
-      distanceInput.value = route.distance || '';
+      numberInput.value = route.route_number || '';
       descriptionInput.value = route.description || '';
+      geometryInput.value = route.geometry || '';
     } catch (error) {
       console.error('获取路线详情失败:', error);
       alert('获取路线详情失败');
       return;
-    }
+    } title.textContent = '编辑路线';
   } else {
     // 添加新路线
     title.textContent = '添加路线';
@@ -758,20 +855,148 @@ const zoomToStation = (station) => {
 };
 
 // 定位到路线
+// const zoomToRoute = async (route) => {
+//   try {
+//     const response = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`,);
+//     if (!response.ok) throw new Error('获取路线站点数据失败');
+
+//     const stations = await response.json();
+
+//     if (stations.length === 0) {
+//       alert('该路线没有站点');
+//       return;
+//     }
+
+//     const { map } = window.busSystem;
+//     const view = map.getView();
+
+//     // 计算路线的所有站点的范围
+//     const coordinates = stations.map(station =>
+//       fromLonLat([station.longitude, station.latitude])
+//     );
+
+//     // 如果只有一个站点，则直接定位到该站点
+//     if (coordinates.length === 1) {
+//       view.animate({
+//         center: coordinates[0],
+//         zoom: 16,
+//         duration: 500
+//       });
+//       return;
+//     }
+
+//     // 计算路线的范围
+//     const extent = coordinates.reduce((extent, coord) => {
+//       if (!extent) {
+//         return [coord[0], coord[1], coord[0], coord[1]];
+//       }
+//       return [
+//         Math.min(extent[0], coord[0]),
+//         Math.min(extent[1], coord[1]),
+//         Math.max(extent[2], coord[0]),
+//         Math.max(extent[3], coord[1]),
+//       ];
+//     }, null);
+
+//     // 定位到路线范围
+//     view.fit(extent, {
+//       padding: [50, 50, 50, 50],
+//       duration: 500
+//     });
+//   } catch (error) {
+//     console.error('定位到路线失败:', error);
+//     alert('定位到路线失败');
+//   }
+// };
+// 定位到路线
 const zoomToRoute = async (route) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`,);
-    if (!response.ok) throw new Error('获取路线站点数据失败');
+    // 首先获取路线的几何数据（不依赖站点数据）
+    const { map, routesSource } = window.busSystem;
+    const view = map.getView();
+
+    // 方法1：使用routesSource中的要素来定位
+    // 查找匹配的路线要素
+    const features = routesSource.getFeatures().filter(
+      feature => feature.get('route_id') === route.route_id
+    );
+
+    if (features.length > 0) {
+      // 使用路线要素的几何范围
+      const extent = features[0].getGeometry().getExtent();
+      view.fit(extent, {
+        padding: [50, 50, 50, 50],
+        duration: 500,
+        maxZoom: 17
+      });
+      return;
+    }
+
+    // 方法2：如果在routesSource中找不到要素，尝试从API获取路线的站点数据
+    console.log(`尝试通过API获取路线${route.route_id}的站点数据...`);
+    const response = await fetch(`${API_BASE_URL}/routes/${route.route_id}/stations`);
+
+    if (!response.ok) {
+      // 如果API请求失败，尝试直接获取路线几何数据
+      console.log(`尝试通过API获取路线${route.route_id}的几何数据...`);
+      const routeResponse = await fetch(`${API_BASE_URL}/routes/${route.route_id}`);
+
+      if (!routeResponse.ok) throw new Error('获取路线数据失败');
+
+      const routeData = await routeResponse.json();
+      if (!routeData.geometry) throw new Error('路线没有几何数据');
+
+      // 解析几何数据
+      let geom;
+      if (typeof routeData.geometry === 'string') {
+        geom = JSON.parse(routeData.geometry);
+      } else {
+        geom = routeData.geometry;
+      }
+
+      if (!geom || !geom.coordinates) throw new Error('路线几何数据格式无效');
+
+      // 创建临时要素并定位
+      let coordinates = [];
+
+      if (geom.type === 'MultiLineString') {
+        // 获取所有线段的坐标点
+        coordinates = geom.coordinates.flat().map(coord => fromLonLat(coord));
+      } else {
+        coordinates = geom.coordinates.map(coord => fromLonLat(coord));
+      }
+
+      if (coordinates.length < 2) throw new Error('路线坐标点不足');
+
+      // 计算路线的范围
+      const extent = coordinates.reduce((extent, coord) => {
+        if (!extent) {
+          return [coord[0], coord[1], coord[0], coord[1]];
+        }
+        return [
+          Math.min(extent[0], coord[0]),
+          Math.min(extent[1], coord[1]),
+          Math.max(extent[2], coord[0]),
+          Math.max(extent[3], coord[1]),
+        ];
+      }, null);
+
+      // 定位到路线范围
+      view.fit(extent, {
+        padding: [50, 50, 50, 50],
+        duration: 500,
+        maxZoom: 17
+      });
+
+      return;
+    }
 
     const stations = await response.json();
 
     if (stations.length === 0) {
-      alert('该路线没有站点');
+      alert('该路线没有站点数据，无法定位');
       return;
     }
-
-    const { map } = window.busSystem;
-    const view = map.getView();
 
     // 计算路线的所有站点的范围
     const coordinates = stations.map(station =>
@@ -804,74 +1029,71 @@ const zoomToRoute = async (route) => {
     // 定位到路线范围
     view.fit(extent, {
       padding: [50, 50, 50, 50],
-      duration: 500
+      duration: 500,
+      maxZoom: 17
     });
   } catch (error) {
     console.error('定位到路线失败:', error);
-    alert('定位到路线失败');
+    alert('定位到路线失败: ' + error.message);
+
+    // 出错时，直接使用路线名称尝试定位
+    try {
+      const { map, routesSource } = window.busSystem;
+      const features = routesSource.getFeatures().filter(
+        feature => feature.get('name') === route.name
+      );
+
+      if (features.length > 0) {
+        const extent = features[0].getGeometry().getExtent();
+        map.getView().fit(extent, {
+          padding: [50, 50, 50, 50],
+          duration: 500,
+          maxZoom: 17
+        });
+      }
+    } catch (e) {
+      console.error('备用定位方法也失败:', e);
+    }
   }
 };
 
-// 保存站点
-const saveStation = async (event) => {
-  event.preventDefault();
 
-  const idInput = document.getElementById('station-id');
-  const nameInput = document.getElementById('station-name');
-  const longitudeInput = document.getElementById('station-longitude');
-  const latitudeInput = document.getElementById('station-latitude');
-  const addressInput = document.getElementById('station-address');
-  const descriptionInput = document.getElementById('station-description');
+
+const saveStation = async (e) => {
+  e.preventDefault();
 
   const stationData = {
-    name: nameInput.value,
-    longitude: parseFloat(longitudeInput.value),
-    latitude: parseFloat(latitudeInput.value),
-    address: addressInput.value,
-    description: descriptionInput.value
+    name: document.getElementById('station-name').value,
+    line: document.getElementById('station-line').value, // 新增字段输入
+    address: document.getElementById('station-address').value, // 对应name_st
+    longitude: parseFloat(document.getElementById('station-longitude').value),
+    latitude: parseFloat(document.getElementById('station-latitude').value)
   };
 
-  // 显示加载指示器
-  document.querySelector('.loader').style.display = 'flex';
-
   try {
-    let response;
+    const id = document.getElementById('station-id').value;
+    const isEdit = id !== '';
 
-    if (idInput.value) {
-      // 更新站点
-      response = await fetch(`${API_BASE_URL}/stations/${idInput.value}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(stationData),
+    const url = isEdit
+      ? `${API_BASE_URL}/stations/${id}`
+      : `${API_BASE_URL}/stations`;
 
-      });
+    const method = isEdit ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(stationData)
+    });
+
+    if (response.ok) {
+      closeModal('station-modal');
+      refreshStations();
     } else {
-      // 添加新站点
-      response = await fetch(`${API_BASE_URL}/stations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(stationData),
-
-      });
+      console.error('保存站点失败:', await response.text());
     }
-
-    if (!response.ok) throw new Error('保存站点失败');
-
-    // 关闭弹窗
-    document.getElementById('station-modal').style.display = 'none';
-
-    // 重新加载数据
-    refreshData();
   } catch (error) {
-    console.error('保存站点失败:', error);
-    alert('保存站点失败');
-  } finally {
-    // 隐藏加载指示器
-    document.querySelector('.loader').style.display = 'none';
+    console.error('保存站点出错:', error);
   }
 };
 
@@ -881,17 +1103,23 @@ const saveRoute = async (event) => {
 
   const idInput = document.getElementById('route-id');
   const nameInput = document.getElementById('route-name');
-  const startSelect = document.getElementById('route-start');
-  const endSelect = document.getElementById('route-end');
-  const distanceInput = document.getElementById('route-distance');
+  const numberInput = document.getElementById('route-number');
   const descriptionInput = document.getElementById('route-description');
+  const geometryInput = document.getElementById('route-geometry');
 
+  // 验证几何数据格式
+  let geometryData;
+  try {
+    geometryData = JSON.parse(geometryInput.value);
+  } catch (e) {
+    alert('路线几何数据格式无效，请确保提供有效的GeoJSON格式');
+    return;
+  }
   const routeData = {
     name: nameInput.value,
-    start_station: startSelect.value ? parseInt(startSelect.value) : null,
-    end_station: endSelect.value ? parseInt(endSelect.value) : null,
-    distance: distanceInput.value ? parseFloat(distanceInput.value) : null,
-    description: descriptionInput.value
+    route_number: numberInput.value,
+    description: descriptionInput.value,
+    geometry: geometryData
   };
 
   // 显示加载指示器
@@ -899,16 +1127,17 @@ const saveRoute = async (event) => {
 
   try {
     let response;
+    const id = idInput.value;
+    const isEdit = id !== '';
 
-    if (idInput.value) {
+    if (isEdit) {
       // 更新路线
-      response = await fetch(`${API_BASE_URL}/routes/${idInput.value}`, {
+      response = await fetch(`${API_BASE_URL}/routes/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(routeData),
-
+        body: JSON.stringify(routeData)
       });
     } else {
       // 添加新路线
@@ -917,21 +1146,21 @@ const saveRoute = async (event) => {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(routeData),
-
+        body: JSON.stringify(routeData)
       });
     }
 
-    if (!response.ok) throw new Error('保存路线失败');
-
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`保存路线失败: ${errorText}`);
+    }
     // 关闭弹窗
-    document.getElementById('route-modal').style.display = 'none';
-
-    // 重新加载数据
-    refreshData();
+    closeModal('route-modal');
+    // 刷新路线数据
+    refreshRoutes();
   } catch (error) {
     console.error('保存路线失败:', error);
-    alert('保存路线失败');
+    alert(error.message || '保存路线失败');
   } finally {
     // 隐藏加载指示器
     document.querySelector('.loader').style.display = 'none';
@@ -1242,16 +1471,21 @@ const refreshData = async () => {
   const { stationsSource, routesSource } = window.busSystem;
 
   // 显示加载指示器
-  document.querySelector('.loader').style.display = 'flex';
+  document.querySelector('.loader').style.display = 'flex'; try {
+    // 加载并刷新站点数据
+    await refreshStations();
 
-  try {
-    // 加载站点数据
-    const stations = await loadStations(stationsSource);
-    renderStationsList(stations);
+    // 加载并刷新路线数据
+    await refreshRoutes();
 
-    // 加载路线数据
-    const routes = await loadRoutes(routesSource, stationsSource);
-    renderRoutesList(routes);
+    // 获取站点和路线数据用于渲染列表
+    const stationsResponse = await fetch(`${API_BASE_URL}/stations`);
+    const stationsData = await stationsResponse.json();
+    renderStationsList(stationsData);
+
+    const routesResponse = await fetch(`${API_BASE_URL}/routes`);
+    const routesData = await routesResponse.json();
+    renderRoutesList(routesData);
   } catch (error) {
     console.error('刷新数据失败:', error);
   } finally {
@@ -1269,6 +1503,14 @@ const showLoginModal = () => {
   closeButton.addEventListener('click', () => {
     loginModal.style.display = 'none';
   });
+};
+
+// 关闭弹窗
+const closeModal = (modalId) => {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.style.display = 'none';
+  }
 };
 
 // 显示主界面
@@ -1404,8 +1646,6 @@ const initApp = async () => {
       }
     });
   });
-
-
 
   initLogin();
 };

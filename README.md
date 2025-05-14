@@ -57,6 +57,11 @@ createdb busSystem
 psql -d busSystem -f server/config/init-db.sql
 ```
 
+数据库表结构说明：
+- `stations` - 存储站点信息，包含id、name、location(地理坐标)、description等字段
+- `routes` - 存储路线信息，包含id、name、path(路线轨迹)、description等字段
+- `station_routes` - 存储站点和路线的关联关系，包含station_id和route_id字段
+
 3. 在项目根目录创建 `.env` 文件，配置数据库连接信息：
 ```
 DB_HOST=localhost
@@ -73,7 +78,8 @@ PORT=3000
 
 1. 启动后端服务
 ```bash
-npx nodemon server/server.js
+
+node server/server.js
 ```
 后端服务将运行在 http://localhost:3000
 
@@ -83,6 +89,8 @@ npm run dev
 ```
 前端开发服务器将运行在 http://localhost:5173
 
+
+
 ### 生产环境
 
 构建前端生产版本：
@@ -90,6 +98,18 @@ npm run dev
 npm run build
 ```
 构建完成后，`dist` 目录下的文件可以部署到生产服务器。
+
+## 站点查询功能
+
+系统提供多种查询方式来检索公交站点：
+
+1. **按名称查询**：输入站点名称或名称的一部分进行模糊匹配
+2. **按路线查询**：选择特定路线，显示该路线上的所有站点
+3. **按区域查询**：通过在地图上绘制多边形来查询特定区域内的站点
+4. **按距离查询**：指定一个中心点和半径，查询该范围内的所有站点
+5. **复合条件查询**：组合多个查询条件进行精确检索
+
+查询结果将在地图上高亮显示，并在左侧面板中列出详细信息，支持进一步的筛选和排序。
 
 ## 系统结构
 

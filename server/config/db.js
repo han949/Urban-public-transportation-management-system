@@ -4,7 +4,7 @@ const { Pool } = require('pg');
 const pool = new Pool({
   user: 'postgres',      // 数据库用户名，需要根据实际情况修改
   host: 'localhost',     // 数据库主机地址
-  database: 'busSystem', // 数据库名称，需要提前在PostgreSQL中创建
+  database: 'tlu_OneMap', // 数据库名称，需要提前在PostgreSQL中创建
   password: '123456',  // 数据库密码，需要根据实际情况修改
   port: 5432,           // PostgreSQL默认端口
 });
